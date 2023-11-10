@@ -14,6 +14,20 @@ libraryDependencies ++= Seq(
   "com.softwaremill.sttp.client3" %% "circe" % sttpVersion,
   "com.softwaremill.sttp.client3" %% "okhttp-backend" % sttpVersion
 )
+
+libraryDependencies ++= {
+  Seq(
+    "com.typesafe.slick"              %% "slick"                          % "3.3.2",
+    "com.typesafe.slick"              %% "slick-hikaricp"                 % "3.3.2",
+    "org.slf4j"                       % "slf4j-api"                       % "1.7.5",
+    "ch.qos.logback"                  % "logback-classic"                 % "1.0.9",
+    "org.xerial"                      % "sqlite-jdbc"                     % "3.34.0",
+    "org.scalatest"                   % "scalatest_2.11"                  % "2.2.1"               % "test"
+  )
+}
+
+
+
 lazy val root = (project in file("."))
   .settings(
     name := "testbot"
