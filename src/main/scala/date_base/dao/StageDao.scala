@@ -10,6 +10,8 @@ object StageDao extends Dao[UserStage] {
 
   override def insert(t: UserStage): Future[Int] = db.run(userStageTable += t)
 
+  def delete(id: Long): Future[Int] = db.run(userStageTable.filter(_.id === id).delete)
+
   def update(us: UserStage)(implicit ec: ExecutionContext) = db.run {
     for {
       bdVs <- userStageTable.filter(_.id === us.id).result.headOption

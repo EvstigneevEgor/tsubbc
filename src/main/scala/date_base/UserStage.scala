@@ -12,6 +12,8 @@ object Stage extends Enumeration {
   val FillInfoSetCommunicate = Value("fill_info_set_communicate")
   /** Юзер должен выбрать роль */
   val FillInfoSetIsDriver = Value("fill_info_set_is_driver")
+  /** главная страница -> Вариативно??? */
+  val Main = Value("main")
 
   // A ColumnType that maps it to NUMBER values 1 and 0
   val columnMapper = MappedColumnType.base[Stage, String](
