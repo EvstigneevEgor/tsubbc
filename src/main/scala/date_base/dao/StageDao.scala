@@ -12,7 +12,14 @@ object StageDao extends Dao[UserStage] {
 
   def delete(id: Long): Future[Int] = db.run(userStageTable.filter(_.id === id).delete)
 
-  def update(us: UserStage)(implicit ec: ExecutionContext) = db.run {
+  def setNextStage(id: Long)(implicit ec: ExecutionContext): Future[Unit] = db.run {
+    for {
+      bdVs <- userStageTable.filter(_.id === id).result.headOption
+      _ <- bdVs.map(a => userStageTable.update(a.setNewStage())).getOrElse(DBIO.successful())
+    } yield ()
+  }
+
+  def update(us: UserStage)(implicit ec: ExecutionContext): Future[Unit] = db.run {
     for {
       bdVs <- userStageTable.filter(_.id === us.id).result.headOption
       _ <- bdVs.map(a => userStageTable.update(a.copy(stage = us.stage))).getOrElse(DBIO.successful(0))
