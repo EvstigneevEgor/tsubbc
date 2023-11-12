@@ -1,0 +1,45 @@
+import Main.request
+import cats.implicits.toFunctorOps
+import com.bot4s.telegram.methods.{SendContact, SendMessage}
+import com.bot4s.telegram.models.Message
+import date_base.dao.{StageDao, UserDao}
+
+import scala.concurrent.{ExecutionContext, Future}
+// Это пример бота
+
+object Commands extends Enumeration {
+  type Commands = Value
+  val DropMe: Value = Value("/dropMe")
+  val ShowMe: Value = Value("/showMe")
+  val AllContacts: Value = Value("/allContacts")
+  val allCommands = Commands.values.map(_.toString)
+
+  def getActionByCommand(commands: Commands)(implicit ec: ExecutionContext) = {
+    commands match {
+      case ShowMe => { implicit msg: Message =>
+        for {
+          user <- UserDao.get(msg.source)
+          userStage <- user.map(user => StageDao.get(user.chatID)).getOrElse(Future.successful(None))
+          _ <- request(SendMessage(msg.source, s"Все что о вас известно:\n$user\n$userStage")).void
+        } yield ()
+      }
+      case DropMe => { implicit msg: Message =>
+        for {
+          user <- UserDao.get(msg.source)
+          _ <- user.fold(Future.successful(0))(a =>
+            UserDao.delete(a.chatID).flatMap(_ => StageDao.delete(a.chatID))
+          )
+          _ <- request(SendMessage(msg.source, "Вы успешно удалены из системы")).void
+        } yield ()
+      }
+      case AllContacts => { implicit msg: Message =>
+        for {
+          users <- UserDao.getAll()
+          filteredUser = users.filter(_.communicate.isDefined)
+          _ <- Future.traverse(filteredUser)(user => request(SendContact(msg.source, user.communicate.get, user.fullName)).void)
+        } yield ()
+      }
+    }
+  }
+}
+
