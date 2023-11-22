@@ -4,4 +4,6 @@
 /target/scala-2.13/classes/
 /.idea/
 /project/
+/src/main/resources/token.conf
 /test.db
+/.bsp/

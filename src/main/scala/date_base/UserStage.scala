@@ -25,28 +25,27 @@ object Stage extends Enumeration {
       case Main => None
     }
 
-  // A ColumnType that maps it to NUMBER values 1 and 0
   val columnMapper = MappedColumnType.base[Stage, String](
-    e => e.toString,
-    s => Stage.withName(s)
+    e => e.toString,  // Преобразование объекта типа Stage в строку
+    s => Stage.withName(s)  // Преобразование строки из базы данных в объект типа Stage
   )
 }
 
 
 case class UserStage(id: Long, stage: Stage) {
-  def setNewStage(): UserStage = {
-    Stage.getNextStage(stage).fold(this)(newStage => copy(stage = newStage))
+  def setNewStage(): UserStage = {  // Метод для установки нового этапа пользователя
+    Stage.getNextStage(stage).fold(this)(newStage => copy(stage = newStage))  // Получение следующего этапа из объекта Stage
   }
 }
 
+// Определение таблицы в базе данных с помощью Slick:
 class UserStageTable(tag: Tag) extends Table[UserStage](tag, "user_stage") {
+  implicit val boolColumnType: JdbcType[Stage] with BaseTypedType[Stage] = Stage.columnMapper // Неявная колонка типа Stage для маппинга типа данных Stage в базу данных
   def id = column[Long]("id", O.PrimaryKey)
-
-  implicit val boolColumnType: JdbcType[Stage] with BaseTypedType[Stage] = Stage.columnMapper
 
   def stage = column[Stage]("stage")
 
-  def * = (id, stage) <>
+  def * = (id, stage) <> // Объявление *, как сопоставлять столбцы таблицы с моделью UserStage
     (UserStage.tupled, UserStage.unapply)
 
 }
