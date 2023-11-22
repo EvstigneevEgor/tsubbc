@@ -19,7 +19,7 @@ object Commands extends Enumeration {
   def getActionByCommand(commands: Commands)(implicit ec: ExecutionContext) = {
     commands match {
       case ShowMe => { implicit msg: Message =>
-        for {
+        for {// Получение информации о пользователе и его текущем этапе, если они есть
           user <- UserDao.get
           userStage <- StageDao.get
           _ <- request(SendMessage(msg.source, s"Все что о вас известно:\n$user\n$userStage")).void
@@ -35,10 +35,10 @@ object Commands extends Enumeration {
         } yield ()
       }
       case AllContacts => { implicit msg: Message =>
-        for {
+        for {  // Получение всех пользователей и отправка контактов тех, у кого есть информация о контакте
           users <- UserDao.getAll()
           filteredUser = users.filter(_.communicate.isDefined)
-          _ <- Future.traverse(filteredUser)(user => request(SendContact(msg.source, user.communicate.get, user.fullName)).void)
+          _ <- Future.traverse(filteredUser)(user => request(SendContact(msg.source, user.communicate.get, user.fullName)).void)  // Отправка контактов каждого пользователя, у которого есть информация о контакте
         } yield ()
       }
     }

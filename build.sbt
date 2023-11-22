@@ -9,6 +9,8 @@ libraryDependencies += "com.bot4s" %% "telegram-core" % "5.7.0"
 libraryDependencies += "com.bot4s" %% "telegram-akka" % "5.7.0"
 val sttpVersion = "3.9.0"
 
+libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.17.1"
+
 libraryDependencies ++= Seq(
   "com.softwaremill.sttp.client3" %% "core" % sttpVersion,
   "com.softwaremill.sttp.client3" %% "circe" % sttpVersion,
