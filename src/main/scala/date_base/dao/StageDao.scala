@@ -1,5 +1,6 @@
 package date_base.dao
 
+import com.bot4s.telegram.models.Message
 import date_base.BaseConfig.{db, userStageTable}
 import date_base.{Stage, UserStage}
 import slick.jdbc.SQLiteProfile.api._
@@ -36,6 +37,10 @@ object StageDao extends Dao[UserStage] {
   }
 
   override def get(id: Long): Future[Option[UserStage]] = db.run(userStageTable.filter(_.id === id).result.headOption)
+
+  def get(implicit m: Message): Future[Option[UserStage]] = get(m.source)
+
+  def getOrCreate(implicit m: Message, ec: ExecutionContext): Future[UserStage] = getOrCreate(m.source)
 
   def getOrCreate(id: Long)(implicit ec: ExecutionContext): Future[UserStage] = db.run(
     for {

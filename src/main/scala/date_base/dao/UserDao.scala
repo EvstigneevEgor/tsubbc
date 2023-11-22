@@ -1,5 +1,6 @@
 package date_base.dao
 
+import com.bot4s.telegram.models.Message
 import date_base.BaseConfig.{db, user}
 import date_base.User
 import slick.jdbc.SQLiteProfile.api._
@@ -11,6 +12,8 @@ object UserDao extends Dao[User] {
   override def insert(t: User): Future[Int] = db.run(user += t)
 
   override def get(id: Long): Future[Option[User]] = db.run(user.filter(_.id === id).result.headOption)
+
+  def get(implicit m: Message): Future[Option[User]] = db.run(user.filter(_.id === m.source).result.headOption)
 
   def getAll(): Future[Seq[User]] = db.run(user.result)
 
