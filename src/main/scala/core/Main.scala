@@ -38,7 +38,7 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
     (msg.text.filterNot(allCommands.contains), msg.contact) match {   // Фильтрация текста сообщения и проверка на наличие контактной информации в сообщении
       case (text, contact) if text.isDefined || contact.isDefined =>  // Случай, если есть текст или контактная информация в сообщении, то
         for {
-          user <- getOrCreate  // Получение или создание пользователя на основе источника сообщения
+          user <- getOrCreateUser  // Получение или создание пользователя на основе источника сообщения
           stage <- StageDao.getOrCreate  // Получение или создание этапа (stage) для пользователя на основе chatID
           messageContext = MessageContext(user, stage.stage)  // Создание контекста сообщения для пользователя с текущим этапом
           _ <- executeStage(messageContext).recover(a => println(s"eeeeerr ${a}"))  // Выполнение этапа и обработка возможных ошибок, если они возникнут
