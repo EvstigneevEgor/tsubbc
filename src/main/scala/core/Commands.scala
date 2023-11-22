@@ -1,7 +1,9 @@
-import Main.request
+package core
+
 import cats.implicits.toFunctorOps
 import com.bot4s.telegram.methods.{SendContact, SendMessage}
 import com.bot4s.telegram.models.Message
+import core.Main.request
 import date_base.dao.{StageDao, UserDao}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,14 +20,14 @@ object Commands extends Enumeration {
     commands match {
       case ShowMe => { implicit msg: Message =>
         for {
-          user <- UserDao.get(msg.source)
-          userStage <- user.map(user => StageDao.get(user.chatID)).getOrElse(Future.successful(None))
+          user <- UserDao.get
+          userStage <- StageDao.get
           _ <- request(SendMessage(msg.source, s"Все что о вас известно:\n$user\n$userStage")).void
         } yield ()
       }
       case DropMe => { implicit msg: Message =>
         for {
-          user <- UserDao.get(msg.source)
+          user <- UserDao.get
           _ <- user.fold(Future.successful(0))(a =>
             UserDao.delete(a.chatID).flatMap(_ => StageDao.delete(a.chatID))
           )

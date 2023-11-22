@@ -1,12 +1,13 @@
-import AnkIsDriverStage.{IS_DRIVER_TAG, buttonsIsDriverAction, chouseStatusButtons}
-import Commands.allCommands
-import Package._
+package core
+
 import com.bot4s.telegram.api._
 import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
 import com.bot4s.telegram.clients.FutureSttpClient
 import com.bot4s.telegram.future.{Polling, TelegramBot}
 import com.bot4s.telegram.methods.SendMessage
 import com.bot4s.telegram.models._
+import core.AnkIsDriverStage.chooseStatusButtons
+import core.Commands.allCommands
 import date_base.Stage
 import date_base.Stage.Stage
 import date_base.dao.{StageDao, UserDao}
@@ -28,8 +29,8 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
     (msg.text.filterNot(allCommands.contains), msg.contact) match {
       case (text, contact) if text.isDefined || contact.isDefined =>
         for {
-          user <- getOrCreate(msg.source)
-          stage <- StageDao.getOrCreate(user.chatID)
+          user <- getOrCreateUser
+          stage <- StageDao.getOrCreate
           messageContext = MessageContext(user, stage.stage)
           _ <- executeStage(messageContext).recover(a => println(s"eeeeerr ${a}"))
         } yield ()
@@ -38,25 +39,29 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
 
   }
 
-  private def getOrCreate(chatId: Long)(implicit msg: Message) = {
-    UserDao.get(chatId).flatMap {
+  private def getOrCreateUser(implicit msg: Message) = {
+    UserDao.get.flatMap {
       case Some(value) => Future.successful(value)
       case None =>
-        val user = date_base.User(
-          userName = msg.chat.username.getOrElse("guest"),
-          chatID = msg.source,
-          isDriver = false,
-          isAuthorized = false,
-          fullName = msg.getNameOrNameCalling,
-          communicate = None
-        )
-        UserDao.insert(user).flatMap(_ => UserDao.get(user.chatID)).flatMap {
+        val user = createNewUser(msg)
+        UserDao.insert(createNewUser(msg)).flatMap(_ => UserDao.get).flatMap {
           case Some(value) => Future.successful(value)
           case None => reply("Внутренняя ошибка приложения").flatMap(_ => {
             Future.failed(naherIdiExeption)
           })
         }
     }
+  }
+
+  private def createNewUser(msg: Message) = {
+    date_base.User(
+      userName = msg.chat.username.getOrElse("guest"),
+      chatID = msg.source,
+      isDriver = false,
+      isAuthorized = false,
+      fullName = msg.getNameOrNameCalling,
+      communicate = None
+    )
   }
 
   private def executeStage(messageContext: MessageContext)(implicit msg: Message) = {
@@ -77,7 +82,7 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
             _ <- UserDao.update(messageContext.getId, _.copy(communicate = Some(value.phoneNumber)))
             _ <- StageDao.setNextStage(messageContext.getId)
             _ <- sendMessageWithButton("Отлично!", ReplyKeyboardRemove())
-            _ <- sendMessageWithButton("Теперь расскажи, ты водитель или только пассажир?", chouseStatusButtons())
+            _ <- sendMessageWithButton("Теперь расскажи, ты водитель или только пассажир?", chooseStatusButtons())
           } yield ()
           case None => Future.unit
         }
@@ -88,15 +93,10 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
     }
   }
 
-  onCallbackWithTag(IS_DRIVER_TAG)(buttonsIsDriverAction("Анкета сохранена. Ты можешь отредактировать её в любое время"))
+  //  onCallbackWithTag(IS_DRIVER_TAG)(buttonsIsDriverAction("Анкета сохранена. Ты можешь отредактировать её в любое время"))
   Await.result(run(), Duration.Inf)
 
 
-  def messagesWithButtons(id: Long, message: String, buttons: ReplyMarkup) =
-    request(SendMessage(id, message, replyMarkup = Some(buttons)))
-
-  def messageWithoutButton(id: Long, message: String) =
-    request(SendMessage(id, message))
 }
 
 case class MessageContext(user: date_base.User, stage: Stage) {
