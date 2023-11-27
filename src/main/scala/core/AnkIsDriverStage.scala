@@ -1,7 +1,7 @@
 package core
 
 import com.bot4s.telegram.models._
-import date_base.dao.{StageDao, UserDao}
+import date_base.dao.{UserDao}
 
 import scala.concurrent.ExecutionContext
 // Это пример бота
@@ -12,7 +12,7 @@ object AnkIsDriverStage {
   private def setIsDriver(chatId: Long, isDriver: Boolean) =
     for {
       _ <- UserDao.update(chatId, _.copy(isDriver = isDriver))
-      _ <- StageDao.setNextStage(chatId)
+      _ <- UserDao.setNextStage(chatId)
     } yield ()
 
   private val newMessageParams: NextMessageParams = NextMessageParams("Анкета сохранена. Ты можешь отредактировать её в любое время")
