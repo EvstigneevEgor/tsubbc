@@ -6,7 +6,7 @@ import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 
 
-case class TripPoint(id: Int, tripID: Int, description: String, longitude:Double, latitude: Double, tripPointType: TripPointType )
+case class TripPoint(id: Long, tripID: Int, description: String, longitude:Double, latitude: Double, tripPointType: TripPointType )
 
 object TripPointType extends Enumeration {
   type TripPointType = Value
@@ -24,7 +24,7 @@ class TripPointTable(tag: Tag) extends Table[TripPoint](tag, "trip_point")  {
 
   implicit val boolColumnType: JdbcType[TripPointType] with BaseTypedType[TripPointType] = TripPointType.columnMapper
 
-  def id = column[Int]("id", O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey)
 
   def tripID= column[Int]("tripID")
 

@@ -6,7 +6,7 @@ import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 import java.time.LocalDateTime
 
-case class Trip(id: Int, dateTime: LocalDateTime, comment: String, initiatorID:Int, tripType: TripType )
+case class Trip(id: Long, dateTime: LocalDateTime, comment: String, initiatorID:Int, tripType: TripType )
 
 object TripType extends Enumeration {
   type TripType = Value
@@ -23,7 +23,7 @@ class TripTable(tag: Tag) extends Table[Trip](tag, "trip")  {
 
   implicit val boolColumnType: JdbcType[TripType] with BaseTypedType[TripType] = TripType.columnMapper
 
-  def id = column[Int]("id", O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey)
 
   def dateTime= column[LocalDateTime]("dateTime")
 
