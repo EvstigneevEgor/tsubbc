@@ -6,7 +6,7 @@ import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 
 
-case class Transaction(id: Int, user_id : Int, trip_id : Int, status:Status )
+case class Transaction(id: Long, user_id : Int, trip_id : Int, status:Status )
 
 object Status extends Enumeration {
   type Status = Value
@@ -24,7 +24,7 @@ class TransactionTable(tag: Tag) extends Table[Transaction](tag, "transaction") 
 
   implicit val boolColumnType: JdbcType[Status] with BaseTypedType[Status] = Status.columnMapper
 
-  def id = column[Int]("id", O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey)
 
   def user_id= column[Int]("user_id")
 
