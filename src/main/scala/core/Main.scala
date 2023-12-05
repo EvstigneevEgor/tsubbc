@@ -9,11 +9,12 @@ import com.bot4s.telegram.models._
 import core.AnkIsDriverStage.chooseStatusButtons
 import core.Commands.allCommands
 import date_base.Stage
-import date_base.dao.{UserDao}
-import sttp.client3.SttpBackend
-import sttp.client3.okhttp.OkHttpFutureBackend
+import date_base.dao.UserDao
 import pureconfig._
 import pureconfig.generic.auto._
+import sttp.client3.SttpBackend
+import sttp.client3.okhttp.OkHttpFutureBackend
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
