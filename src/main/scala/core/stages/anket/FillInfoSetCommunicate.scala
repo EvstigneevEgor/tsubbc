@@ -1,4 +1,4 @@
-package core.stages
+package core.stages.anket
 
 import com.bot4s.telegram.models.{KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove}
 import core.{ContactReceive, Stage}

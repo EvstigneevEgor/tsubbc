@@ -1,4 +1,4 @@
-package core.stages
+package core.stages.anket
 
 import com.bot4s.telegram.methods.EditMessageReplyMarkup
 import com.bot4s.telegram.models.{ChatId, InlineKeyboardMarkup, Message}

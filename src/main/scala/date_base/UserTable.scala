@@ -45,9 +45,9 @@ object StageType extends Enumeration {
   def getNextStage(stage: StageType): Option[StageType] =
     stage match {
       case NotAuthorized => Some(FillInfoSetCommunicate)
+      case Main => None
       case FillInfoSetCommunicate => Some(FillInfoSetIsDriver)
       case FillInfoSetIsDriver => Some(Main)
-      case Main => None
       case FillInfoSetCar => Some(Main)
       case FindTripSetTime => Some(FindTripSetFirst)
       case FindTripSetFirst => Some(FindTripSetSecond)

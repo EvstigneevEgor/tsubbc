@@ -1,6 +1,6 @@
 package core
 
-import com.bot4s.telegram.models.{Contact, InlineKeyboardButton, ReplyMarkup}
+import com.bot4s.telegram.models.{Contact, InlineKeyboardButton}
 import core.Main.prefixTag
 import date_base.User
 
@@ -15,10 +15,7 @@ case class MessageReceive(text: String, override val user: User, override val me
 
 case class ContactReceive(contact: Contact, override val user: User, override val messageId: Option[Int]) extends Activity
 
-object Activity {
-  case class NextMessageParams(text: String, newMarkup: Option[ReplyMarkup] = None)
-
-}
+object Activity
 
 case class Button(
                    tittle: String) {

@@ -11,6 +11,23 @@ import date_base.{StageType, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+ * Основное состояние бота в ожидании новой команды
+ * Пункты меню:
+ * <p>
+ * 1. Редактировать анкету [[editAnketButton]]: Удаляет информацию о машине из анкеты, и переносит пользователя на этап [[StageType.FillInfoSetIsDriver]]
+ * <p>
+ * 2. Найти поездку [[searchTripButton]]: Переносит на этап [[StageType.FindTripSetTime]] (todo)
+ * <p>
+ * 3. Найти попутчика [[createTripButton]]: Переносит на этап [[StageType.CreateTripSetTime]] (todo). Доступен только водителю [[https://github.com/EvstigneevEgor/tsubbc/blob/62b2db0a0b6f7d52cd0d46a9227d7e6aa8bf7e88/src/main/scala/core/stages/MainStage.scala#L42 уже есть фильтр]]
+ * <p>
+ * 4. Информация о текущей поездке [[tripInfoButton]]: Переносит на этап [[StageType.CheckTrip]] . Доступен только для юзеров с активной поездкой (todo)
+ * <p>
+ * 5. Список активных поездок [[listTripButton]]: Пока не проработан. И не ясна разница с [[tripInfoButton]] @Yorymotoru
+ * <p>
+ *
+ * @author Egor
+ */
 object MainStage extends Stage {
 
   override val stageType: StageType = StageType.Main
@@ -19,7 +36,7 @@ object MainStage extends Stage {
   private val searchTripButton = Button("Найти поездку")
   private val createTripButton = Button("Найти попутчика")
   private val tripInfoButton = Button("Информация о текущей поездке")
-  private val listTripButton = Button("Список активных поездок")
+  //  private val listTripButton = Button("Список активных поездок")
 
 
   def mainButtons(user: User): InlineKeyboardMarkup = {
@@ -28,8 +45,8 @@ object MainStage extends Stage {
         editAnketButton.getInlineKeyboardButton,
         searchTripButton.getInlineKeyboardButton) ++
         Option(createTripButton.getInlineKeyboardButton).filter(_ => user.isDriver).iterator.toSeq ++
-        Seq(tripInfoButton.getInlineKeyboardButton, // Добавить условие активной/ых поездок
-          listTripButton.getInlineKeyboardButton)
+        Seq(tripInfoButton.getInlineKeyboardButton) // @todo Добавить условие активной/ых поездок
+      //          ,listTripButton.getInlineKeyboardButton)
     )
   }
 

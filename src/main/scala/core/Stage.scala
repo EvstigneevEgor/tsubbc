@@ -5,6 +5,7 @@ import com.bot4s.telegram.methods.SendMessage
 import com.bot4s.telegram.models.{Message, ReplyMarkup}
 import core.Main.request
 import core.Stage.getStageByType
+import core.stages.anket.{FillInfoSetCar, FillInfoSetCommunicate, FillInfoSetIsDriver}
 import date_base.StageType.StageType
 import date_base.{StageType, User}
 
@@ -45,13 +46,14 @@ object Stage {
     request(SendMessage(id, message))
 
   // todo shit refactor me please
+  // todo Соответственно, после добавления нового этапа нужно его прописывать здесь. Пока @Egor не перепишет это место
   def getStageByType(st: StageType): Stage = {
     st match {
       case StageType.NotAuthorized => stages.NotAuthorized
-      case StageType.FillInfoSetCommunicate => stages.FillInfoSetCommunicate
-      case StageType.FillInfoSetIsDriver => stages.FillInfoSetIsDriver
+      case StageType.FillInfoSetCommunicate => FillInfoSetCommunicate
+      case StageType.FillInfoSetIsDriver => FillInfoSetIsDriver
       case StageType.Main => stages.MainStage
-      case StageType.FillInfoSetCar => stages.FillInfoSetCar
+      case StageType.FillInfoSetCar => FillInfoSetCar
       case StageType.FindTripSetTime => ???
       case StageType.CheckTrip => ???
       case StageType.FindTripSetFirst => ???
