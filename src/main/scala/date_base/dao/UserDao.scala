@@ -2,6 +2,7 @@ package date_base.dao
 
 import com.bot4s.telegram.models.Message
 import date_base.BaseConfig.{db, user}
+import date_base.StageType.StageType
 import date_base.{BaseConfig, StageType, User}
 import slick.jdbc.SQLiteProfile.api._
 
@@ -23,6 +24,13 @@ object UserDao extends Dao[User] {
     for {
       bdVs <- user.filter(_.id === id).result.headOption
       _ <- bdVs.map(a => user.filter(_.id === id).update(f(a))).getOrElse(DBIO.successful(0))
+    } yield ()
+  }
+
+  def setStage(id: Long, stageType: StageType)(implicit ec: ExecutionContext): Future[Unit] = db.run {
+    for {
+      bdVs <- user.filter(_.id === id).result.headOption
+      _ <- bdVs.map(a => user.filter(_.id === id).update(a.copy(stage = stageType))).getOrElse(DBIO.successful(0))
     } yield ()
   }
 
