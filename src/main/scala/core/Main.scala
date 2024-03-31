@@ -4,11 +4,9 @@ import com.bot4s.telegram.api._
 import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
 import com.bot4s.telegram.clients.FutureSttpClient
 import com.bot4s.telegram.future.{Polling, TelegramBot}
-import com.bot4s.telegram.methods.SendMessage
 import com.bot4s.telegram.models._
-import core.AnkIsDriverStage.chooseStatusButtons
 import core.Commands.allCommands
-import date_base.Stage
+import date_base.StageType
 import date_base.dao.UserDao
 import pureconfig._
 import pureconfig.generic.auto._
@@ -23,7 +21,7 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
 
   case class AppConfig(token: String)
 
-  val config = ConfigSource.resources("token.conf").load[AppConfig] match {
+  val config = ConfigSource.resources("token.conf").load[AppConfig] match { // для запуска положите в ресурсы токен
     case Right(appConfig) => appConfig
     case Left(failures) =>
       sys.error(s"Failed to load configuration: $failures")
@@ -34,17 +32,42 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
   Commands.values.foreach(cmd => onCommand(cmd.toString)(Commands.getActionByCommand(cmd))) //функция, которая принимает каждый элемент коллекции Commands как cmd и выполняет операцию
 
   override def receiveMessage(msg: Message): Future[Unit] = { // Переопределение метода receiveMessage, который принимает сообщение типа Message и возвращает Future[Unit]
-    implicit val m: Message = msg // Неявное значение типа Message для использования внутри метода
     // Проверка наличия текста в сообщении и контактных данных
     (msg.text.filterNot(allCommands.contains), msg.contact) match { // Фильтрация текста сообщения и проверка на наличие контактной информации в сообщении
-      case (text, contact) if text.isDefined || contact.isDefined => // Случай, если есть текст или контактная информация в сообщении, то
+      case (_, Some(contact)) =>
         for {
-          user <- getOrCreateUser // Получение или создание пользователя на основе источника сообщения
-          _ <- executeStage(user).recover(a => println(s"eeeeerr ${a}")) // Выполнение этапа и обработка возможных ошибок, если они возникнут
+          user <- getOrCreateUser(msg) // Получение или создание пользователя на основе источника сообщения
+          activity = ContactReceive(contact, user = user, messageId = Some(msg.messageId))
+          _ <- Stage.getStageByType(user.stage).process(activity)
+        } yield ()
+      case (Some(sText), _) =>
+        for {
+          user <- getOrCreateUser(msg) // Получение или создание пользователя на основе источника сообщения
+          activity = MessageReceive(sText, user = user, messageId = Some(msg.messageId))
+          _ <- Stage.getStageByType(user.stage).process(activity)
         } yield ()
       case _ => Future.unit // Случай, если текста и контактной информации в сообщении нет
     }
+  }
 
+
+  onCallbackQuery {
+    implicit cbq: CallbackQuery =>
+      for {
+        user <- cbq.message match {
+          case Some(message) => getOrCreateUser(message)
+          case None => Future.failed(naherIdiExeption)
+        }
+        activity <- cbq.data match {
+          case Some(tag) => Future.successful(Some(ButtonPressed(Button(tag), user = user, messageId = cbq.message.map(_.messageId))))
+          case None => Stage.getStageByType(user.previousStage).sendLastMessage(user.chatID).map(_ => None)
+        }
+        _ <- activity match {
+          case Some(btn) =>
+            Stage.getStageByType(user.stage).process(btn)
+          case None => Future.unit
+        }
+      } yield ()
   }
 
   private def getOrCreateUser(implicit msg: Message) = {
@@ -52,7 +75,7 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
       .flatMap {
         case Some(value) => Future.successful(value)
         case None =>
-          UserDao.insert(createNewUser(msg)).flatMap(_ => UserDao.get).flatMap {
+          UserDao.insert(createNewUser(msg)).flatMap(_ => UserDao.get(msg)).flatMap {
             case Some(value) => Future.successful(value)
             case None => reply("Внутренняя ошибка приложения").flatMap(_ => {
               Future.failed(naherIdiExeption)
@@ -69,41 +92,11 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
       isAuthorized = false,
       fullName = msg.getNameOrNameCalling,
       communicate = None,
-      stage = Stage.NotAuthorized
+      stage = StageType.NotAuthorized,
+      previousStage = StageType.NotAuthorized
     )
   }
 
-  private def executeStage(user: date_base.User)(implicit msg: Message) = {
-    val sendMessageWithoutButton = messageWithoutButton(msg.source, _)
-    val sendMessageWithButton = messagesWithButtons(msg.source, _, _)
-    user.stage match { // Проверка текущего этапа в сообщении
-      case Stage.NotAuthorized => // Случай, если текущий этап "NotAuthorized"
-        for {
-          a <- UserDao.setNextStage(user.chatID) // Установка следующего этапа в базе данных
-          _ <- sendMessageWithoutButton(s"Привет, ${msg.getNameOrNameCalling}! Добро пожаловать в чат-бот Бла Бла Кар ТГУ. Давай заполним анкету")
-          _ <-
-            request(SendMessage(msg.source, "Как другие пользователи могут с тобой связаться?", replyMarkup = Some(ReplyKeyboardMarkup.singleButton(KeyboardButton.requestContact("Дать линку"))))) // Запрос на отправку контактной информации пользователем
-        } yield ()
-
-      case Stage.FillInfoSetCommunicate => // Случай, если текущий этап "FillInfoSetCommunicate"
-        msg.contact match { // Проверяем наличие контактной информации в сообщении
-          case Some(value) => for { // Случай, если контактная информация присутствует
-            _ <- UserDao.update(user.chatID, _.copy(communicate = Some(value.phoneNumber))) // Обновляем информацию пользователя с полученным номером телефона
-            _ <- UserDao.setNextStage(user.chatID) // Устанавливаем следующий этап в базе данных
-            _ <- sendMessageWithButton("Отлично!", ReplyKeyboardRemove())
-            _ <- sendMessageWithButton("Теперь расскажи, ты водитель или только пассажир?", chooseStatusButtons())
-          } yield ()
-          case None => Future.unit
-        }
-
-      case Stage.FillInfoSetIsDriver => Future.unit
-
-      case Stage.Main => Future.unit
-    }
-  }
-
-  //  onCallbackWithTag(IS_DRIVER_TAG)(buttonsIsDriverAction("Анкета сохранена. Ты можешь отредактировать её в любое время"))
   Await.result(run(), Duration.Inf)
-
 
 }

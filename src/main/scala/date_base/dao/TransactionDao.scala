@@ -1,11 +1,11 @@
 package date_base.dao
 
 
-import date_base.BaseConfig.{db, transaction, user}
-import date_base.{BaseConfig, Stage, Transaction, User}
+import date_base.BaseConfig.{db, transaction}
+import date_base.Transaction
 import slick.jdbc.SQLiteProfile.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object TransactionDao extends Dao[Transaction] {
   override def insert(t: Transaction): Future[Int] = db.run(transaction += t)
