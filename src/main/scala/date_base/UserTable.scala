@@ -71,6 +71,7 @@ case class User(
                  fullName: String,
                  communicate: Option[String],
                  isDriver: Boolean,
+                 carInfo: Option[String],
                  isAuthorized: Boolean,
                  stage: StageType,
                  previousStage: StageType
@@ -89,13 +90,15 @@ class UserTable(tag: Tag) extends Table[User](tag, "user") {
 
   def isDriver = column[Boolean]("is_driver")
 
+  def carInfo = column[Option[String]]("car_info")
+
   def isAuthorized = column[Boolean]("is_authorized")
 
   def stage = column[StageType]("stage")
 
   def previousStage = column[StageType]("previous_stage")
 
-  def * = (id, userName, fullName, communicate, isDriver, isAuthorized, stage, previousStage) <>
+  def * = (id, userName, fullName, communicate, isDriver, carInfo, isAuthorized, stage, previousStage) <>
     (User.tupled, User.unapply)
 
 }

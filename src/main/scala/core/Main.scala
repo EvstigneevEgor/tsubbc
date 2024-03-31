@@ -60,7 +60,7 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
         }
         activity <- cbq.data match {
           case Some(tag) => Future.successful(Some(ButtonPressed(Button(tag), user = user, messageId = cbq.message.map(_.messageId))))
-          case None => Stage.getStageByType(user.previousStage).sendLastMessage(user.chatID).map(_ => None)
+          case None => Stage.getStageByType(user.stage).sendFirstMessage(user).map(_ => None)
         }
         _ <- activity match {
           case Some(btn) =>
@@ -93,7 +93,8 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
       fullName = msg.getNameOrNameCalling,
       communicate = None,
       stage = StageType.NotAuthorized,
-      previousStage = StageType.NotAuthorized
+      previousStage = StageType.NotAuthorized,
+      carInfo = None
     )
   }
 

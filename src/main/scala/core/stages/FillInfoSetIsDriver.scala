@@ -3,10 +3,10 @@ package core.stages
 import com.bot4s.telegram.methods.EditMessageReplyMarkup
 import com.bot4s.telegram.models.{ChatId, InlineKeyboardMarkup, Message}
 import core.Main.request
-import core.{Button, ButtonPressed, Stage}
-import date_base.StageType
+import core.{Button, ButtonPressed, RichFuture, Stage}
 import date_base.StageType.StageType
 import date_base.dao.UserDao
+import date_base.{StageType, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,41 +22,33 @@ object FillInfoSetIsDriver extends Stage {
     "Я пассажир"
   )
 
-  private def setIsDriver(chatId: Long, isDriver: Boolean, messageId: Option[Int])(implicit ec: ExecutionContext) =
+  private def setIsDriver(user: User, isDriver: Boolean, messageId: Option[Int])(implicit ec: ExecutionContext) =
     for {
-      _ <- UserDao.update(chatId, _.copy(isDriver = isDriver))
-      _ <- UserDao.setNextStage(chatId)
+      _ <- UserDao.update(user.chatID, _.copy(isDriver = isDriver))
+      nextStage = if (isDriver) StageType.FillInfoSetCar else StageType.Main
+      _ <- UserDao.setStage(user.chatID, nextStage) // Устанавливаем следующий этап в базе данных
       _ <- request(
         EditMessageReplyMarkup(
-          Some(ChatId(chatId)),
+          Some(ChatId(user.chatID)),
           messageId = messageId,
           replyMarkup = None
         ))
-      _ <- sendLastMessage(chatId)
+      _ <- Stage.getStageByType(nextStage).sendFirstMessage(user)
     } yield ()
 
   override def buttonPressedProcess(pressed: ButtonPressed)(implicit ec: ExecutionContext): Future[Unit] = {
     pressed.button match {
       case Button(driverButton.tag) =>
-        setIsDriver(pressed.user.chatID, isDriver = true, pressed.messageId).recover { a: Throwable =>
-          println(a)
-          a.printStackTrace()
-          a
-        }
+        setIsDriver(pressed.user, isDriver = true, pressed.messageId)
       case Button(passengerButton.tag) =>
-        setIsDriver(pressed.user.chatID, isDriver = false, pressed.messageId).recover { a: Throwable =>
-          println(a)
-          a.printStackTrace()
-          a
+        setIsDriver(pressed.user, isDriver = false, pressed.messageId).flatTap {
+          Stage.messageWithoutButton(pressed.user.chatID, s"Зарегестрировал тебя как пассажира")
         }
     }
   }
 
-  override def sendLastMessage(chatId: Long): Future[Message] = {
-    Stage.messageWithoutButton(
-      chatId,
-      "Функционал дальше в разработке :)"
-    )
+  override def sendFirstMessage(user: User): Future[Message] = {
+    Stage.messagesWithButtons(user.chatID, "Теперь расскажи, ты водитель или только пассажир?", chooseStatusButtons())
   }
 
   def chooseStatusButtons(): InlineKeyboardMarkup = {
