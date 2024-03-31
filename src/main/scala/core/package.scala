@@ -1,6 +1,4 @@
-import com.bot4s.telegram.methods.SendMessage
-import com.bot4s.telegram.models.{Message, ReplyMarkup}
-import core.Main.request
+import com.bot4s.telegram.models.Message
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,14 +13,8 @@ package object core {
   }
 
   implicit class RichMessage(x: Message) {
-    def getOurChatId: String = x.from.get.id.toString
 
     def getNameOrNameCalling: String = x.from.map(_.firstName).getOrElse("Мудила")
   }
 
-  def messagesWithButtons(id: Long, message: String, buttons: ReplyMarkup) =
-    request(SendMessage(id, message, replyMarkup = Some(buttons)))
-
-  def messageWithoutButton(id: Long, message: String) =
-    request(SendMessage(id, message))
 }

@@ -1,12 +1,12 @@
 package date_base
 
-import date_base.Stage.Stage
+import date_base.StageType.StageType
 import slick.ast.BaseTypedType
 import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 
-object Stage extends Enumeration {
-  type Stage = Value
+object StageType extends Enumeration {
+  type StageType = Value
   /** Юзер только зашел, и еще не авторизован -> FillInfoSetCommunicate */
   val NotAuthorized: Value = Value("not_authorized")
   /** Юзер должен указать средства коммуникации  -> FillInfoSetIsDriver */
@@ -39,8 +39,10 @@ object Stage extends Enumeration {
   /** Водитель может оставить комментарий */
   val CreateTripSetComment: Value = Value("create_trip_set_comment")
 
+  //*todo сделать метод который будет выдавать человекочитаемое название этапа*//
+  def getReadableName(stageType: StageType): String = ???
 
-  def getNextStage(stage: Stage): Option[Stage] =
+  def getNextStage(stage: StageType): Option[StageType] =
     stage match {
       case NotAuthorized => Some(FillInfoSetCommunicate)
       case FillInfoSetCommunicate => Some(FillInfoSetIsDriver)
@@ -57,16 +59,25 @@ object Stage extends Enumeration {
       case CreateTripSetComment => Some(Main)
     }
 
-  val columnMapper = MappedColumnType.base[Stage, String](
+  val columnMapper = MappedColumnType.base[StageType, String](
     e => e.toString, // Преобразование объекта типа Stage в строку
-    s => Stage.withName(s) // Преобразование строки из базы данных в объект типа Stage
+    s => StageType.withName(s) // Преобразование строки из базы данных в объект типа Stage
   )
 }
 
-case class User(chatID: Long, userName: String, fullName: String, communicate: Option[String], isDriver: Boolean, isAuthorized: Boolean, stage: Stage)
+case class User(
+                 chatID: Long,
+                 userName: String,
+                 fullName: String,
+                 communicate: Option[String],
+                 isDriver: Boolean,
+                 isAuthorized: Boolean,
+                 stage: StageType,
+                 previousStage: StageType
+               )
 
 class UserTable(tag: Tag) extends Table[User](tag, "user") {
-  implicit val boolColumnType: JdbcType[Stage] with BaseTypedType[Stage] = Stage.columnMapper
+  implicit val boolColumnType: JdbcType[StageType] with BaseTypedType[StageType] = StageType.columnMapper
 
   def id = column[Long]("id", O.PrimaryKey)
 
@@ -80,9 +91,11 @@ class UserTable(tag: Tag) extends Table[User](tag, "user") {
 
   def isAuthorized = column[Boolean]("is_authorized")
 
-  def stage = column[Stage]("stage")
+  def stage = column[StageType]("stage")
 
-  def * = (id, userName, fullName, communicate, isDriver, isAuthorized, stage) <>
+  def previousStage = column[StageType]("previous_stage")
+
+  def * = (id, userName, fullName, communicate, isDriver, isAuthorized, stage, previousStage) <>
     (User.tupled, User.unapply)
 
 }
