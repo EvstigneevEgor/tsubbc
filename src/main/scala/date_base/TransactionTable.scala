@@ -5,8 +5,10 @@ import slick.ast.BaseTypedType
 import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 
-
-case class Transaction(id: Long, user_id : Int, trip_id : Int, status:Status )
+/**
+ * @Yorymotoru Можешь написать что это?) Я забыл)))
+ */
+case class Transaction(id: Long, user_id: Int, trip_id: Int, status: Status)
 
 object Status extends Enumeration {
   type Status = Value
@@ -20,13 +22,13 @@ object Status extends Enumeration {
   )
 }
 
-class TransactionTable(tag: Tag) extends Table[Transaction](tag, "transaction")  {
+class TransactionTable(tag: Tag) extends Table[Transaction](tag, "transaction") {
 
   implicit val boolColumnType: JdbcType[Status] with BaseTypedType[Status] = Status.columnMapper
 
   def id = column[Long]("id", O.PrimaryKey)
 
-  def user_id= column[Int]("user_id")
+  def user_id = column[Int]("user_id")
 
   def trip_id = column[Int]("trip_id")
 
