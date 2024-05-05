@@ -35,7 +35,7 @@ object MainStage extends Stage {
   private val editAnketButton = Button("Редактировать анкету")
   private val searchTripButton = Button("Найти поездку")
   private val createTripButton = Button("Найти попутчика")
-  private val tripInfoButton = Button("Информация о текущей поездке")
+  private val tripInfoButton = Button("Информация о ближайшей поездке")
   //  private val listTripButton = Button("Список активных поездок")
 
 
@@ -52,15 +52,17 @@ object MainStage extends Stage {
 
   override def buttonPressedProcess(pressed: ButtonPressed)(implicit ec: ExecutionContext): Future[Unit] = {
     pressed.button match {
+      case Button(createTripButton.tag) =>
+        for {
+          _ <- UserDao.setStage(pressed.user.chatID, StageType.CreateTripSetTime)
+          _ <- removeButton(pressed)
+          _ <- Stage.getStageByType(StageType.CreateTripSetTime).sendFirstMessage(pressed.user)
+        } yield ()
       case Button(editAnketButton.tag) =>
         for {
-          _ <- UserDao.update(pressed.user.chatID, _.copy(stage = StageType.FillInfoSetIsDriver, carInfo = None))
-          _ <- request(
-            EditMessageReplyMarkup(
-              Some(ChatId(pressed.user.chatID)),
-              messageId = pressed.messageId,
-              replyMarkup = None
-            ))
+          _ <- UserDao.setStage(pressed.user.chatID, StageType.FillInfoSetIsDriver)
+          _ <- UserDao.update(pressed.user.chatID, _.copy(carInfo = None))
+          _ <- removeButton(pressed)
           _ <- Stage.getStageByType(StageType.FillInfoSetIsDriver).sendFirstMessage(pressed.user)
         } yield ()
       case _ =>
@@ -69,6 +71,15 @@ object MainStage extends Stage {
           "Функционал дальше в разработке :)"
         ).void
     }
+  }
+
+  private def removeButton(pressed: ButtonPressed) = {
+    request(
+      EditMessageReplyMarkup(
+        Some(ChatId(pressed.user.chatID)),
+        messageId = pressed.messageId,
+        replyMarkup = None
+      ))
   }
 
   override def sendFirstMessage(user: User): Future[Message] = {
