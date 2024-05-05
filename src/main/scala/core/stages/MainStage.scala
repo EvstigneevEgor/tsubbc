@@ -19,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * <p>
  * 2. Найти поездку [[searchTripButton]]: Переносит на этап [[StageType.FindTripSetTime]] (todo)
  * <p>
- * 3. Найти попутчика [[createTripButton]]: Переносит на этап [[StageType.CreateTripSetTime]] (todo). Доступен только водителю [[https://github.com/EvstigneevEgor/tsubbc/blob/62b2db0a0b6f7d52cd0d46a9227d7e6aa8bf7e88/src/main/scala/core/stages/MainStage.scala#L42 уже есть фильтр]]
+ * 3. Найти попутчика [[createTripButton]]: Переносит на этап [[StageType.CreateTripSetTime]]
  * <p>
  * 4. Информация о текущей поездке [[tripInfoButton]]: Переносит на этап [[StageType.CheckTrip]] . Доступен только для юзеров с активной поездкой (todo)
  * <p>
@@ -43,8 +43,8 @@ object MainStage extends Stage {
     InlineKeyboardMarkup.singleColumn(
       Seq(
         editAnketButton.getInlineKeyboardButton,
-        searchTripButton.getInlineKeyboardButton) ++
-        Option(createTripButton.getInlineKeyboardButton).filter(_ => user.isDriver).iterator.toSeq ++
+        searchTripButton.getInlineKeyboardButton,
+        createTripButton.getInlineKeyboardButton) ++
         Seq(tripInfoButton.getInlineKeyboardButton) // @todo Добавить условие активной/ых поездок
       //          ,listTripButton.getInlineKeyboardButton)
     )

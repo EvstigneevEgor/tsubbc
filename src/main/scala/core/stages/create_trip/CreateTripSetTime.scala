@@ -44,7 +44,7 @@ object CreateTripSetTime extends Stage {
         dateTime = ldt,
         comment = None,
         initiatorID = receive.user.chatID,
-        tripType = TripType.ByDriver
+        tripType = if (receive.user.isDriver) TripType.ByDriver else TripType.ByPassenger
       )
       tripId <- TripDao.insert(trip) // создаем поездку
       nextStage = StageType.getNextStage(receive.user.stage).getOrElse(StageType.Main)
