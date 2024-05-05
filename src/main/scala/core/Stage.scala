@@ -4,8 +4,9 @@ import cats.implicits.toFunctorOps
 import com.bot4s.telegram.methods.SendMessage
 import com.bot4s.telegram.models.{Message, ReplyMarkup}
 import core.Main.request
-import core.Stage.getStageByType
+import core.Stage.{getStageByType, messageWithoutButton}
 import core.stages.anket.{FillInfoSetCar, FillInfoSetCommunicate, FillInfoSetIsDriver}
+import core.stages.create_trip.{CreateTripSetComment, CreateTripSetFirst, CreateTripSetSecond, CreateTripSetTime}
 import date_base.StageType.StageType
 import date_base.{StageType, User}
 
@@ -29,10 +30,16 @@ trait Stage {
   def sendFirstMessage(user: User): Future[Message]
 
   def process(activity: Activity)(implicit ec: ExecutionContext): Future[Unit] = {
-    activity match {
+    val eventualUnit = activity match {
       case pressed: ButtonPressed => buttonPressedProcess(pressed)
       case receive: MessageReceive => messageReceiveProcess(receive)
       case contact: ContactReceive => contactReceiveProcess(contact)
+    }
+    eventualUnit.recoverWith { a =>
+      messageWithoutButton(activity.user.chatID, s"Какой-то косяк: ${a.getMessage}")
+        .flatMap(_ => sendFirstMessage(activity.user))
+        .flatMap(_ => Future.failed(a))
+
     }
   }
 }
@@ -54,15 +61,15 @@ object Stage {
       case StageType.FillInfoSetIsDriver => FillInfoSetIsDriver
       case StageType.Main => stages.MainStage
       case StageType.FillInfoSetCar => FillInfoSetCar
-      case StageType.FindTripSetTime => ???
       case StageType.CheckTrip => ???
+      case StageType.FindTripSetTime => ???
       case StageType.FindTripSetFirst => ???
       case StageType.FindTripSetSecond => ???
       case StageType.FindTripSetComment => ???
-      case StageType.CreateTripSetTime => ???
-      case StageType.CreateTripSetFirst => ???
-      case StageType.CreateTripSetSecond => ???
-      case StageType.CreateTripSetComment => ???
+      case StageType.CreateTripSetTime => CreateTripSetTime
+      case StageType.CreateTripSetFirst => CreateTripSetFirst
+      case StageType.CreateTripSetSecond => CreateTripSetSecond
+      case StageType.CreateTripSetComment => CreateTripSetComment
     }
   }
 }

@@ -75,12 +75,16 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
       .flatMap {
         case Some(value) => Future.successful(value)
         case None =>
-          UserDao.insert(createNewUser(msg)).flatMap(_ => UserDao.get(msg)).flatMap {
-            case Some(value) => Future.successful(value)
-            case None => reply("Внутренняя ошибка приложения").flatMap(_ => {
-              Future.failed(naherIdiExeption)
-            })
-          }
+          UserDao.insert(createNewUser(msg))
+            .flatMap(_ =>
+              UserDao.get(msg.source)
+            )
+            .flatMap {
+              case Some(value) => Future.successful(value)
+              case None => reply("Внутренняя ошибка приложения").flatMap(_ => {
+                Future.failed(naherIdiExeption)
+              })
+            }
       }
   }
 
@@ -94,7 +98,8 @@ object Main extends TelegramBot with App with Polling with Commands[Future] with
       communicate = None,
       stage = StageType.NotAuthorized,
       previousStage = StageType.NotAuthorized,
-      carInfo = None
+      carInfo = None,
+      editingTripId = None
     )
   }
 

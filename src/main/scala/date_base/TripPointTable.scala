@@ -6,7 +6,7 @@ import slick.jdbc.JdbcType
 import slick.jdbc.SQLiteProfile.api._
 
 
-case class TripPoint(id: Long, tripID: Int, description: String, longitude:Double, latitude: Double, tripPointType: TripPointType )
+case class TripPoint(id: Option[Long], tripID: Long, description: String, longitude: Option[Double], latitude: Option[Double], tripPointType: TripPointType)
 
 object TripPointType extends Enumeration {
   type TripPointType = Value
@@ -14,28 +14,28 @@ object TripPointType extends Enumeration {
   val ending: Value = Value("ending")
   val intermediate: Value = Value("intermediate")
 
-  val columnMapper = MappedColumnType.base[TripPointType, String](
+  implicit val columnMapper: JdbcType[TripPointType] with BaseTypedType[TripPointType] = MappedColumnType.base[TripPointType, String](
     e => e.toString, // Преобразование объекта типа TripPointType в строку
     s => TripPointType.withName(s) // Преобразование строки из базы данных в объект типа TripPointType
   )
 }
 
-class TripPointTable(tag: Tag) extends Table[TripPoint](tag, "trip_point")  {
+class TripPointTable(tag: Tag) extends Table[TripPoint](tag, "trip_point") {
 
   implicit val boolColumnType: JdbcType[TripPointType] with BaseTypedType[TripPointType] = TripPointType.columnMapper
 
-  def id = column[Long]("id", O.PrimaryKey)
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-  def tripID= column[Int]("tripID")
+  def tripID = column[Long]("tripID")
 
   def description = column[String]("description")
 
-  def longitude = column[Double]("longitude")
+  def longitude = column[Option[Double]]("longitude")
 
-  def latitude = column[Double]("latitude")
+  def latitude = column[Option[Double]]("latitude")
 
   def tripPointType = column[TripPointType]("tripPointType")
 
-  def * = (id, tripID, description, longitude, latitude, tripPointType) <>
+  def * = (id.?, tripID, description, longitude, latitude, tripPointType) <>
     (TripPoint.tupled, TripPoint.unapply)
 }

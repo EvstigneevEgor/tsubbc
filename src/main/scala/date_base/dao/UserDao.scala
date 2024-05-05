@@ -1,40 +1,41 @@
 package date_base.dao
 
 import com.bot4s.telegram.models.Message
+import core.Main.executionContext
 import date_base.BaseConfig.{db, user}
 import date_base.StageType.StageType
 import date_base.{BaseConfig, StageType, User}
 import slick.jdbc.SQLiteProfile.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-object UserDao extends Dao[User] {
+object UserDao {
 
-  override def insert(t: User): Future[Int] = db.run(user += t)
+  def insert(t: User): Future[Int] = db.run(user += t)
 
-  override def get(id: Long): Future[Option[User]] = db.run(user.filter(_.id === id).result.headOption)
+  def get(id: Long): Future[Option[User]] = db.run(user.filter(_.id === id).result.headOption)
 
   def get(implicit m: Message): Future[Option[User]] = db.run(user.filter(_.id === m.source).result.headOption)
 
-  def getAll(): Future[Seq[User]] = db.run(user.result)
+  def getAll: Future[Seq[User]] = db.run(user.result)
 
   def delete(id: Long): Future[Int] = db.run(user.filter(_.id === id).delete)
 
-  def update(id: Long, f: User => User)(implicit ec: ExecutionContext): Future[Unit] = db.run {
+  def update(id: Long, f: User => User): Future[Unit] = db.run {
     for {
       bdVs <- user.filter(_.id === id).result.headOption
       _ <- bdVs.map(a => user.filter(_.id === id).update(f(a))).getOrElse(DBIO.successful(0))
     } yield ()
   }
 
-  def setStage(id: Long, stageType: StageType)(implicit ec: ExecutionContext): Future[Unit] = db.run {
+  def setStage(id: Long, stageType: StageType): Future[Unit] = db.run {
     for {
       bdVs <- user.filter(_.id === id).result.headOption
-      _ <- bdVs.map(a => user.filter(_.id === id).update(a.copy(stage = stageType))).getOrElse(DBIO.successful(0))
+      _ <- bdVs.map(a => user.filter(_.id === id).update(a.copy(stage = stageType, previousStage = a.stage))).getOrElse(DBIO.successful(0))
     } yield ()
   }
 
-  def setNextStage(id: Long)(implicit ec: ExecutionContext): Future[Unit] = db.run {
+  def setNextStage(id: Long): Future[Unit] = db.run {
     for {
       existingUser <- user.filter(_.id === id).result.headOption
       _ <- existingUser match {

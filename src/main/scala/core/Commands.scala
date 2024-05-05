@@ -37,7 +37,7 @@ object Commands extends Enumeration {
 
       case AllContacts => implicit msg: Message =>
         for { // Получение всех пользователей и отправка контактов тех, у кого есть информация о контакте
-          users <- UserDao.getAll()
+          users <- UserDao.getAll
           filteredUser = users.filter(_.communicate.isDefined)
           _ <- Future.traverse(filteredUser)(user => request(SendContact(msg.source, user.communicate.get, user.fullName)).void) // Отправка контактов каждого пользователя, у которого есть информация о контакте
         } yield ()
