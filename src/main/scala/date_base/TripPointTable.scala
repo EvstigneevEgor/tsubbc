@@ -14,7 +14,7 @@ object TripPointType extends Enumeration {
   val ending: Value = Value("ending")
   val intermediate: Value = Value("intermediate")
 
-  implicit val columnMapper = MappedColumnType.base[TripPointType, String](
+  implicit val columnMapper: JdbcType[TripPointType] with BaseTypedType[TripPointType] = MappedColumnType.base[TripPointType, String](
     e => e.toString, // Преобразование объекта типа TripPointType в строку
     s => TripPointType.withName(s) // Преобразование строки из базы данных в объект типа TripPointType
   )

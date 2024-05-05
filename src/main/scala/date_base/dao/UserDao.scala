@@ -17,7 +17,7 @@ object UserDao {
 
   def get(implicit m: Message): Future[Option[User]] = db.run(user.filter(_.id === m.source).result.headOption)
 
-  def getAll(): Future[Seq[User]] = db.run(user.result)
+  def getAll: Future[Seq[User]] = db.run(user.result)
 
   def delete(id: Long): Future[Int] = db.run(user.filter(_.id === id).delete)
 

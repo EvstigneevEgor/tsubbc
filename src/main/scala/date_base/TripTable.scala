@@ -14,7 +14,7 @@ object TripType extends Enumeration {
   val ByDriver: Value = Value("by_driver")
   val ByPassenger: Value = Value("by_passenger")
 
-  implicit val columnMapper = MappedColumnType.base[TripType, String](
+  implicit val columnMapper: JdbcType[TripType] with BaseTypedType[TripType] = MappedColumnType.base[TripType, String](
     e => e.toString, // Преобразование объекта типа TripType в строку
     s => TripType.withName(s) // Преобразование строки из базы данных в объект типа TripType
   )

@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object CreateTripSetTime extends Stage {
 
   override val stageType: StageType = StageType.CreateTripSetTime
-  val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
 
   override def messageReceiveProcess(receive: MessageReceive)(implicit ec: ExecutionContext): Future[Unit] = {
     for {
